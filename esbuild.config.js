@@ -5,7 +5,7 @@ function createBuildSettings(options) {
 	return {
 		// platform: "brow"
 		entryPoints: ['src/index.ts'],
-		outfile: "./build/bundle.js",
+		outfile: './build/bundle.js',
 		bundle: true,
 		plugins: [
 			esbuildPluginTsc({
@@ -13,9 +13,9 @@ function createBuildSettings(options) {
 			}),
 		],
 		loader: {
-			".png": "file"
+			'.png': 'file',
 		},
-		assetNames: "[name]",
+		assetNames: '[name]',
 		...options,
 	}
 }
@@ -24,7 +24,7 @@ if (process.argv[2] == '--serve') {
 	const context = await esbuild.context(
 		createBuildSettings({
 			sourcemap: true,
-			publicPath: "/build/",
+			publicPath: '/build/',
 			banner: {
 				js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`,
 			},
@@ -41,7 +41,7 @@ if (process.argv[2] == '--serve') {
 
 	console.log(`Serving app at ${host}:${port}.`)
 } else if (process.argv[2] == '--build') {
-	await esbuild.build(createBuildSettings({ minify: true }))
+	await esbuild.build(createBuildSettings({ minify: true, publicPath: '/build/' }))
 } else {
-	console.log("Specify operation mode: --build or --serve")
+	console.log('Specify operation mode: --build or --serve')
 }
