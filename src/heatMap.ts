@@ -23,6 +23,7 @@ const colorRamp = [
 	'#DCE6D2',
 	'#E3E9D9',
 	'#EAECE0',
+	'#fff5eb',
 ].reverse()
 
 const gridColor = '#ebedf0'
@@ -95,7 +96,8 @@ export function renderHeatMap(motionTagDataParser: MotionTagDataParser, year: nu
 	const rawData = motionTagDataParser.getDistanceHeatMap()
 
 	const data = Object.values(rawData)
-	const inputDomain = [0, d3.max(data, (entry) => entry.total)!]
+	// const inputDomain = [0, d3.max(data, (entry) => entry.total)!]
+	const inputDomain = [0, 300 * 1000]
 
 	var myColor = d3
 		.scaleQuantize()
