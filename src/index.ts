@@ -1,6 +1,7 @@
 import { Control, LatLng, LayerGroup, Map, Polyline, TileLayer } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { VisualizeControl } from './controls/VisualizeControl'
+import { renderHeatMap } from './heatMap'
 import './index.css'
 import { MotionTagDataParser } from './parser/motionTagDataParser'
 
@@ -17,13 +18,13 @@ const osmTileMap = new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png
 })
 
 const visualizeControl = new VisualizeControl({})
-const layerControl = new Control.Layers({}, {}, {});
+const layerControl = new Control.Layers({}, {}, {})
 
 osmTileMap.addTo(map)
 visualizeControl.addTo(map)
 layerControl.addTo(map)
 
-const layerGroups: {[key:string]: LayerGroup} = {};
+const layerGroups: { [key: string]: LayerGroup } = {}
 
 export async function setData(d: string) {
 	const start = Date.now()
@@ -31,28 +32,28 @@ export async function setData(d: string) {
 	await parser.parse(d)
 
 	console.log('Parsing data took', Date.now() - start + 'ms')
+	renderHeatMap(parser, 0)
 
 	// parser.getStays().forEach((stay) => {
 	// 	new Marker(stay.position)
 	// })
 
 	for (let movement of parser.getMovements()) {
-		const shortName = movement.mode.substring(6)
-		if (!Object.keys(layerGroups).find((v) => v === movement.mode.substring(6))) {
-			layerGroups[shortName] = new LayerGroup([], {});
-			layerGroups[shortName].addTo(map);
-			layerControl.addOverlay(layerGroups[shortName], shortName);
+		if (!Object.keys(layerGroups).find((v) => v === movement.mode)) {
+			layerGroups[movement.mode] = new LayerGroup([], {})
+			layerGroups[movement.mode].addTo(map)
+			layerControl.addOverlay(layerGroups[movement.mode], movement.mode)
 		}
 		new Polyline(movement.path, {
-			color: getColorForMode(shortName),
+			color: getColorForMode(movement.mode),
 			weight: 5,
-		}).addTo(layerGroups[shortName])
+		}).addTo(layerGroups[movement.mode])
 	}
 }
 
-function getColorForMode(shortName: string) {
+function getColorForMode(mode: string) {
 	// Not every Mode is currently mapped
-	switch (shortName) {
+	switch (mode) {
 		case 'Hiking':
 		case 'Walk':
 			return '#dfba06'
@@ -80,7 +81,7 @@ function getColorForMode(shortName: string) {
 		case 'Cablecar':
 		case 'KickScooter':
 		default:
-			console.log('No color for:', shortName)
+			console.log('No color for:', mode)
 			return '#4c8b9c'
 	}
 }

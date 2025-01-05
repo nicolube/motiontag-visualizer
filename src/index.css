@@ -6,7 +6,22 @@ body {
 
 #map {
 	width: 100dvw;
-	height: 100dvh;
+	height: calc(100dvh - 240px);
+}
+
+#heat {
+	width: 100dvw;
+	height: 240px;
+}
+
+#heat > .tooltip {
+	position: absolute;
+	display: block;
+	z-index: 10000;
+	width: 100px;
+	height: 50px;
+	background-color: #fff;
+	padding: 5px;
 }
 
 .leaflet-control-load-csv {
