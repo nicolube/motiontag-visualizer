@@ -5,7 +5,7 @@
   "homepage": "https://jonas-ponas.github.io/motiontag-vizualizer",
   "scripts": {
     "build": "node ./esbuild.config.js --build",
-    "github-pages": "mkdir _site && cd _site && mkdir build && cp -r ../build . && cp ../index.html .",
+    "github-pages": "rm -rf ./_site && mkdir _site && cd _site && mkdir build && cp -r ../build . && cp ../index.html .",
     "serve": "node ./esbuild.config.js --serve"
   },
   "author": "",
