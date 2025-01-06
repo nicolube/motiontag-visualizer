@@ -18,6 +18,9 @@ export class MotionTagDataParser {
 				console.warn('Unexpected CSV line:', line)
 				continue
 			}
+
+			if (values[15] === 't') continue // Skip "merged" entry
+
 			let entry: Entry = {
 				id: values[0],
 				started_at: new Date(values[3]),
@@ -104,41 +107,6 @@ export class MotionTagDataParser {
 
 		this.distanceHeatMapByDay[date][mode] += length
 		this.distanceHeatMapByDay[date].total += length
-	}
-
-	public static getColorForMode(mode: string) {
-		// Not every Mode is currently mapped
-		switch (mode) {
-			case 'Hiking':
-			case 'Walk':
-				return '#dfba06'
-			case 'LightRail':
-				return '#37ab9e'
-			case 'RegionalTrain':
-				return '#da73a0'
-			case 'Train':
-				return '#cd3841'
-			case 'Ecar':
-			case 'Car':
-				return '#d48004'
-			case 'Subway':
-				return '#3d8eb4'
-			case 'Tram':
-				return '#2dabc4'
-			case 'Bicycle':
-				return '#8da433'
-			case 'Airplane':
-				return '#e8b100'
-			case 'Bus':
-				return '#5178ab'
-			case 'Boat':
-				return '#6d6db0'
-			case 'Cablecar':
-			case 'KickScooter':
-			default:
-				console.log('No color for:', mode)
-				return '#4c8b9c'
-		}
 	}
 }
 

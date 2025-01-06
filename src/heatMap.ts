@@ -1,7 +1,15 @@
 import * as d3 from 'd3'
-import { MotionTagDataParser } from './parser/motionTagDataParser'
+import { getColorForMode } from './constants'
 
-export interface DailyDistanceHeatMapOptions {}
+export type Entry = {
+	[key: string]: any
+	total: number
+	date: Date
+}
+
+export interface DailyDistanceHeatMapOptions {
+	onSelect?: (entry: Entry | null) => void
+}
 
 export class DailyDistanceHeatMap {
 	private static HEIGHT = 200
@@ -44,11 +52,13 @@ export class DailyDistanceHeatMap {
 	private xScale: d3.ScaleBand<string> | null = null
 	private yScale: d3.ScaleBand<string> | null = null
 
-	private selectedEntry: { [key: string]: any; total: number; date: Date } | null = null
+	private selectedEntry: Entry | null = null
+	private options: DailyDistanceHeatMapOptions = {}
 
 	constructor(element: string, options?: DailyDistanceHeatMapOptions) {
 		this.svg = d3.select(element).append('svg')
 		this.tooltip = d3.select('#heat').append('div').attr('class', 'tooltip').text('')
+		this.options = options ?? {}
 	}
 
 	public drawGrid(year: number) {
@@ -65,7 +75,7 @@ export class DailyDistanceHeatMap {
 			.domain(weeks)
 
 		const width = (this.xScale.bandwidth() + 1) * weeks.length - 23
-		console.log(this.xScale.bandwidth())
+
 		this.svg_g = this.svg
 			.attr('width', Math.floor(width))
 			.attr('height', DailyDistanceHeatMap.HEIGHT)
@@ -80,6 +90,7 @@ export class DailyDistanceHeatMap {
 			.style('opacity', 0)
 			.attr('width', this.xScale.bandwidth())
 			.attr('height', this.yScale.bandwidth())
+			.attr('stroke', DailyDistanceHeatMap.SELECT_STROKE)
 
 		this.drawAxis()
 	}
@@ -133,7 +144,7 @@ export class DailyDistanceHeatMap {
 		this.select_rect.transition()
 		if (this.selectedEntry == null) {
 			this.select_rect.style('opacity', 0)
-			this.tooltip.html("")
+			this.tooltip.html('')
 			return
 		}
 
@@ -148,7 +159,7 @@ export class DailyDistanceHeatMap {
 		this.tooltip.html(DailyDistanceHeatMap.getDescription(this.selectedEntry))
 	}
 
-	private static getDescription(entry: { [key: string]: any; total: number; date: Date }) {
+	private static getDescription(entry: Entry) {
 		const distance = entry.total > 5000 ? Math.round(entry.total / 100) / 10 + 'km' : entry.total + 'm'
 		const date = `${entry.date.getDate()}. ${
 			DailyDistanceHeatMap.MONTHS[entry.date.getMonth()]
@@ -160,23 +171,23 @@ export class DailyDistanceHeatMap {
 				return entry[a] < entry[b] ? 1 : -1
 			})
 			.map((key) => {
-				return `<span style="background-color: ${MotionTagDataParser.getColorForMode(key)}">${
+				return `<span style="background-color: ${getColorForMode(key)}">${
 					entry[key] > 5000 ? Math.round(entry[key] / 100) / 10 + 'km' : entry[key] + 'm'
 				} ${key}</span>`
 			})
 			.join('\t')
-			return `<b>${date}:</b> ${distance}, <b>Modes:</b> ${modes}`
+		return `<b>${date}:</b> ${distance}, <b>Modes:</b> ${modes}`
 	}
 
-
-	public drawData(data: { total: number; date: Date; [key: string]: any }[], upperBound?: number) {
+	public drawData(data: Entry[], upperBound?: number) {
 		if (this.xScale == null || this.yScale == null || this.svg_g == null) return
 
 		this.svg_g.select('g[role=data]').remove()
 		const tooltip = this.tooltip
+		const onSelect = this.options.onSelect
 
 		const getSelectedDate = () => this.selectedEntry?.date || null
-		const setSelectedDate = (entry: { [key: string]: any; total: number; date: Date } | null) => {
+		const setSelectedDate = (entry: Entry | null) => {
 			this.selectedEntry = entry
 			this.drawSelected()
 		}
@@ -201,19 +212,21 @@ export class DailyDistanceHeatMap {
 			// .attr('border-radius', "")
 			.attr('fill', (entry) => colorRamp(entry.total))
 			.on('mouseover', function (event, entry) {
-				d3.select(this).attr('stroke', 'black')
+				d3.select(this).attr('stroke', DailyDistanceHeatMap.HOVER_STROKE)
 				if (getSelectedDate() == null) tooltip.html(DailyDistanceHeatMap.getDescription(entry))
 			})
 			.on('mouseleave', function (event, entry) {
 				d3.select(this).attr('stroke', 'none')
-				if (getSelectedDate() == null) tooltip.html("")
+				if (getSelectedDate() == null) tooltip.html('')
 			})
-			.on('click', function (event, entry) {
+			.on('click', (event, entry) => {
 				if (getSelectedDate() != null && getSelectedDate()!.toDateString() == entry.date.toDateString()) {
 					setSelectedDate(null)
+					if (this.options.onSelect) this.options.onSelect(null)
 					return
 				}
 				setSelectedDate(entry)
+				if (this.options.onSelect) this.options.onSelect(entry)
 			})
 	}
 

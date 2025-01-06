@@ -14,6 +14,7 @@ function createBuildSettings(options) {
 		],
 		loader: {
 			'.png': 'file',
+			'.svg': 'file',
 		},
 		assetNames: '[name]',
 		...options,
@@ -24,10 +25,10 @@ if (process.argv[2] == '--serve') {
 	const context = await esbuild.context(
 		createBuildSettings({
 			sourcemap: true,
-			publicPath: './build/',
 			banner: {
 				js: `new EventSource('/esbuild').addEventListener('change', () => location.reload());`,
 			},
+			publicPath: './build/',
 		})
 	)
 
@@ -41,7 +42,7 @@ if (process.argv[2] == '--serve') {
 
 	console.log(`Serving app at ${host}:${port}.`)
 } else if (process.argv[2] == '--build') {
-	await esbuild.build(createBuildSettings({ minify: true, publicPath: './build/' }))
+	await esbuild.build(createBuildSettings({ minify: true, publicPath: "./"}))
 } else {
 	console.log('Specify operation mode: --build or --serve')
 }

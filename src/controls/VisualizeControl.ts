@@ -1,6 +1,6 @@
 import { Control, DomUtil, Map } from 'leaflet'
 import { setData } from '..'
-import FileUp from '../file-up.png'
+import FileUp from '../img/file-up.svg'
 
 export class VisualizeControl extends Control {
 	private csvInputElement: HTMLInputElement = document.createElement('input')
@@ -49,8 +49,6 @@ export class VisualizeControl extends Control {
 				reader.onload = () => resolve()
 				reader.onerror = (event) => reject((event.currentTarget as FileReader).error)
 			});
-
-			// localStorage.setItem("data", reader.result as string);
 			setData(reader.result as string)
 		}
 		event.stopPropagation()
