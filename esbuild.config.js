@@ -36,6 +36,7 @@ if (process.argv[2] == '--serve') {
 
 	const { host, port } = await context.serve({
 		port: 5500,
+		host: 'localhost',
 		servedir: './',
 		fallback: './index.html',
 	})

@@ -14,9 +14,6 @@ importers:
       leaflet:
         specifier: ^1.9.4
         version: 1.9.4
-      leaflet.heat:
-        specifier: ^0.2.0
-        version: 0.2.0
     devDependencies:
       '@types/d3':
         specifier: ^7.4.3
@@ -27,9 +24,6 @@ importers:
       '@types/leaflet':
         specifier: ^1.9.15
         version: 1.9.15
-      '@types/leaflet.heat':
-        specifier: ^0.2.4
-        version: 0.2.4
       esbuild:
         specifier: ^0.24.2
         version: 0.24.2
@@ -288,9 +282,6 @@ packages:
   '@types/geojson@7946.0.15':
     resolution: {integrity: sha512-9oSxFzDCT2Rj6DfcHF8G++jxBKS7mBqXl5xrRW+Kbvjry6Uduya2iiwqHPhVXpasAVMBYKkEPGgKhd3+/HZ6xA==}
 
-  '@types/leaflet.heat@0.2.4':
-    resolution: {integrity: sha512-Ocdgf2LUBsPAdQ29KY7QAwe5J5NDq/T2msTsA3OL7eYG3EVjMvkrPqXYJtLbXIauxP9e7bOReDie3GzC7lBLqg==}
-
   '@types/leaflet@1.9.15':
     resolution: {integrity: sha512-7UuggAuAs+mva66gtf2OTB1nEhzU/9JED93TIaOEgvFMvG/dIGQaukHE7izHo1Zd+Ko1L4ETUw7TBc8yUxevpg==}
 
@@ -445,9 +436,6 @@ packages:
   internmap@2.0.3:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
     engines: {node: '>=12'}
-
-  leaflet.heat@0.2.0:
-    resolution: {integrity: sha512-Cd5PbAA/rX3X3XKxfDoUGi9qp78FyhWYurFg3nsfhntcM/MCNK08pRkf4iEenO1KNqwVPKCmkyktjW3UD+h9bQ==}
 
   leaflet@1.9.4:
     resolution: {integrity: sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==}
@@ -666,10 +654,6 @@ snapshots:
 
   '@types/geojson@7946.0.15': {}
 
-  '@types/leaflet.heat@0.2.4':
-    dependencies:
-      '@types/leaflet': 1.9.15
-
   '@types/leaflet@1.9.15':
     dependencies:
       '@types/geojson': 7946.0.15
@@ -870,8 +854,6 @@ snapshots:
       safer-buffer: 2.1.2
 
   internmap@2.0.3: {}
-
-  leaflet.heat@0.2.0: {}
 
   leaflet@1.9.4: {}
 
