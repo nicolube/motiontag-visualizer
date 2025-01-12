@@ -23,8 +23,23 @@ const osmTileMap = new TileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png
 	attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
 })
 
+const cartoDbTileMap = new TileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+	attribution:
+		'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+	subdomains: 'abcd',
+	maxZoom: 20,
+})
+
+const esriTileMap = new TileLayer(
+	'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
+	{
+		attribution:
+			'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+	}
+)
+
 const visualizeControl = new VisualizeControl({})
-const layerControl = new Control.Layers({ OpenStreetMap: osmTileMap }, {}, {})
+const layerControl = new Control.Layers({ OpenStreetMap: osmTileMap, CARTO: cartoDbTileMap, ESRI: esriTileMap }, {}, {})
 
 const routeHeatMapLayer = new LayerGroup()
 const layerGroups: { [key: string]: LayerGroup } = {}
