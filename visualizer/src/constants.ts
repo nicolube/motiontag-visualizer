@@ -25,18 +25,23 @@ export function getColorForMode(mode: string) {
 			return '#cd3841'
 		case 'Ecar':
 		case 'Car':
+		case 'Ridepooling':
+		case 'Carsharing':
 			return '#d48004'
 		case 'Subway':
 			return '#3d8eb4'
 		case 'Tram':
 			return '#2dabc4'
 		case 'Bicycle':
+		case 'Ebicycle':
+		case 'Bikesharing':
 			return '#8da433'
 		case 'Airplane':
 			return '#e8b100'
 		case 'Bus':
 			return '#5178ab'
 		case 'Boat':
+		case 'Ferry':
 			return '#6d6db0'
 		default:
 			console.log('No color for:', mode)
