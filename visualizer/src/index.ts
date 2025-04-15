@@ -1,8 +1,8 @@
-import { Control, LatLng, LayerGroup, Map, Marker, Polyline, TileLayer } from 'leaflet'
+import { Control, LatLng, LayerGroup, Map as LeafletMap, Marker, Polyline, TileLayer } from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { DailyDistanceHeatMap, type Entry } from './DailyDistanceHeatMap'
 import { getColorForMode, getIconForPurpose } from './constants'
 import { VisualizeControl } from './controls/VisualizeControl'
-import { DailyDistanceHeatMap, Entry } from './DailyDistanceHeatMap'
 import './index.css'
 import { MotionTagDataParser } from './parser/motionTagDataParser'
 
@@ -13,7 +13,7 @@ const dailyDistance = new DailyDistanceHeatMap('#heat', {
 
 dailyDistance.drawGrid(2024)
 
-const map = new Map('map', {
+const map = new LeafletMap('map', {
 	zoom: 7,
 	center: new LatLng(51.4, 10.0), // Center of germany
 })
@@ -35,7 +35,7 @@ const esriTileMap = new TileLayer(
 	{
 		attribution:
 			'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
-	}
+	},
 )
 
 const visualizeControl = new VisualizeControl({})
@@ -53,13 +53,13 @@ layerControl.setPosition('topleft')
 routeHeatMapLayer.addTo(map)
 
 function showTracksForSelectedDate(entry: Entry | null) {
-	for (let [key, modePolyLines] of Object.entries(polyLines)) {
-		for (let polyLine of modePolyLines) {
+	for (const [key, modePolyLines] of Object.entries(polyLines)) {
+		for (const polyLine of modePolyLines) {
 			polyLine.remove()
 		}
 		delete polyLines[key]
 	}
-	for (let [key, layerGroup] of Object.entries(layerGroups)) {
+	for (const [key, layerGroup] of Object.entries(layerGroups)) {
 		layerGroup.remove()
 		layerControl.removeLayer(layerGroup)
 		delete layerGroups[key]
@@ -85,15 +85,15 @@ function showTracksForSelectedDate(entry: Entry | null) {
 		layerGroups['Stays'].addTo(map)
 	}
 
-	for (let stay of dayStays) {
+	for (const stay of dayStays) {
 		markers.push(
 			new Marker(stay.position, { icon: getIconForPurpose(stay.purpose) })
 				.bindPopup(JSON.stringify(stay))
-				.addTo(layerGroups['Stays'])
+				.addTo(layerGroups['Stays']),
 		)
 	}
 
-	for (let movement of dayMovements) {
+	for (const movement of dayMovements) {
 		if (!Object.keys(layerGroups).find((v) => v === movement.mode)) {
 			layerGroups[movement.mode] = new LayerGroup([], {})
 			layerGroups[movement.mode].addTo(map)
@@ -109,7 +109,7 @@ function showTracksForSelectedDate(entry: Entry | null) {
 				weight: 5,
 			})
 				.bindPopup(JSON.stringify({ ...movement, path: [] }))
-				.addTo(layerGroups[movement.mode])
+				.addTo(layerGroups[movement.mode]),
 		)
 	}
 }
@@ -119,12 +119,12 @@ export async function setData(d: string) {
 
 	await parser.parse(d)
 
-	console.log('Parsing data took', Date.now() - start + 'ms')
+	console.log('Parsing data took', `${Date.now() - start}ms`)
 
 	dailyDistance.drawData(Object.values(parser.getDistanceHeatMap()))
 
 	// "HeatMap"
-	for (let movement of parser.getMovements()) {
+	for (const movement of parser.getMovements()) {
 		new Polyline(movement.path, {
 			opacity: 0.1,
 			color: getColorForMode(movement.mode),

@@ -2,6 +2,7 @@ import * as d3 from 'd3'
 import { getColorForMode } from './constants'
 
 export type Entry = {
+	// biome-ignore lint/suspicious/noExplicitAny:
 	[key: string]: any
 	total: number
 	date: Date
@@ -83,7 +84,7 @@ export class DailyDistanceHeatMap {
 			.attr('transform', 'translate(23, 16)')
 
 		this.tooltip.style('width', `${width - 23}px`)
-		this.tooltip.style('margin-left', `23px`)
+		this.tooltip.style('margin-left', '23px')
 
 		this.select_rect = this.svg_g
 			.append('rect')
@@ -109,12 +110,12 @@ export class DailyDistanceHeatMap {
 
 		const xAxis = this.svg_g.append('g').call(
 			d3.axisTop(this.xScale).tickFormat((domainValue) => {
-				const weekNr = parseInt(domainValue)
-				if (this.getMonthFromWeek(weekNr - 1, 2024) != this.getMonthFromWeek(weekNr, 2024)) {
+				const weekNr = Number.parseInt(domainValue)
+				if (this.getMonthFromWeek(weekNr - 1, 2024) !== this.getMonthFromWeek(weekNr, 2024)) {
 					return this.getMonthFromWeek(weekNr, 2024)
 				}
 				return domainValue
-			})
+			}),
 		)
 		xAxis.select('.domain').remove()
 		xAxis
@@ -126,14 +127,14 @@ export class DailyDistanceHeatMap {
 		xAxis
 			.selectAll('.tick text')
 			.filter(function () {
-				return Number.isNaN(parseInt(d3.select(this).text()))
+				return Number.isNaN(Number.parseInt(d3.select(this).text()))
 			})
 			.attr('font-weight', 'bolder')
 
 		xAxis
 			.selectAll('.tick text')
 			.filter(function () {
-				return !Number.isNaN(parseInt(d3.select(this).text()))
+				return !Number.isNaN(Number.parseInt(d3.select(this).text()))
 			})
 			.attr('fill', DailyDistanceHeatMap.WEEK_NR_COLOR)
 	}
@@ -153,26 +154,26 @@ export class DailyDistanceHeatMap {
 			.attr('x', (entry) => this.xScale!(`${this.getISOWeekNumber(this.selectedEntry!.date!)}`)!)
 			.attr(
 				'y',
-				(entry) => this.yScale!(['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][this.selectedEntry!.date!.getDay()])!
+				(entry) => this.yScale!(['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][this.selectedEntry!.date!.getDay()])!,
 			)
 
 		this.tooltip.html(DailyDistanceHeatMap.getDescription(this.selectedEntry))
 	}
 
 	private static getDescription(entry: Entry) {
-		const distance = entry.total > 5000 ? Math.round(entry.total / 100) / 10 + 'km' : entry.total + 'm'
+		const distance = entry.total > 5000 ? `${Math.round(entry.total / 100) / 10}km` : `${entry.total}m`
 		const date = `${entry.date.getDate()}. ${
 			DailyDistanceHeatMap.MONTHS[entry.date.getMonth()]
 		} ${entry.date.getFullYear()}`
 
 		const modes = Object.keys(entry)
-			.filter((key) => !(key == 'date' || key == 'total'))
+			.filter((key) => !(key === 'date' || key === 'total'))
 			.sort((a, b) => {
 				return entry[a] < entry[b] ? 1 : -1
 			})
 			.map((key) => {
 				return `<span style="background-color: ${getColorForMode(key)}">${
-					entry[key] > 5000 ? Math.round(entry[key] / 100) / 10 + 'km' : entry[key] + 'm'
+					entry[key] > 5000 ? `${Math.round(entry[key] / 100) / 10}km` : `${entry[key]}m`
 				} ${key}</span>`
 			})
 			.join('\t')
@@ -208,7 +209,7 @@ export class DailyDistanceHeatMap {
 			.attr('y', (entry) => this.yScale!(['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][entry.date.getDay()])!)
 			.attr('width', () => this.xScale!.bandwidth() - 5)
 			.attr('height', () => this.yScale!.bandwidth() - 5)
-			.attr('transform', `translate(2.5, 2.5)`)
+			.attr('transform', 'translate(2.5, 2.5)')
 			// .attr('border-radius', "")
 			.attr('fill', (entry) => colorRamp(entry.total))
 			.on('mouseover', function (event, entry) {
@@ -220,7 +221,7 @@ export class DailyDistanceHeatMap {
 				if (getSelectedDate() == null) tooltip.html('')
 			})
 			.on('click', (event, entry) => {
-				if (getSelectedDate() != null && getSelectedDate()!.toDateString() == entry.date.toDateString()) {
+				if (getSelectedDate() != null && getSelectedDate()!.toDateString() === entry.date.toDateString()) {
 					setSelectedDate(null)
 					if (this.options.onSelect) this.options.onSelect(null)
 					return
@@ -237,7 +238,7 @@ export class DailyDistanceHeatMap {
 
 		const lastDayOfYear = new Date(year, 11, 31)
 
-		return lastDayOfYear.getDay() == 4 || (isLeapYear && lastDayOfYear.getDay() == 5) ? 53 : 52
+		return lastDayOfYear.getDay() === 4 || (isLeapYear && lastDayOfYear.getDay() === 5) ? 53 : 52
 	}
 
 	private getISOWeekNumber(date: Date): number {
@@ -259,7 +260,7 @@ export class DailyDistanceHeatMap {
 	}
 
 	private getMonthFromWeek(week: number, year: number) {
-		let d = new Date(year, 0, 1 + (week - 1) * 7)
+		const d = new Date(year, 0, 1 + (week - 1) * 7)
 		d.getUTCDay() < 5
 			? d.setUTCDate(d.getUTCDate() - d.getUTCDay() + 1)
 			: d.setUTCDate(d.getUTCDate() + 8 - d.getUTCDay())

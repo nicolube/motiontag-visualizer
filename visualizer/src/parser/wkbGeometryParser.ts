@@ -1,6 +1,6 @@
 // Ref.: https://libgeos.org/specifications/wkb/
 
-import { GeoJsonObject, LineString, MultiLineString, Point } from 'geojson'
+import type { GeoJsonObject, LineString, MultiLineString, Point } from 'geojson'
 
 export class WkbGeometryReader {
 	// Geometry Types
@@ -26,8 +26,8 @@ export class WkbGeometryReader {
 	constructor(bytes: Uint8Array) {
 		this.bytes = bytes
 		this.dataView = new DataView(this.bytes.buffer)
-		let byteOrder = this.readByte()
-		if (byteOrder == 1) {
+		const byteOrder = this.readByte()
+		if (byteOrder === 1) {
 			this.littleEndian = true
 		} else {
 			this.littleEndian = false
@@ -35,21 +35,23 @@ export class WkbGeometryReader {
 	}
 
 	public static fromHexString(data: string): WkbGeometryReader {
-		let chunk = data.split('').reduce((totalBytes, _, index, hexData) => {
-			if (index % 2 == 0) {
-				let num = (parseInt(hexData[index], 16) << 4) + parseInt(hexData[index + 1], 16)
-				totalBytes[index / 2] = num
+		const chunk = data.split('').reduce(
+			(totalBytes, _, index, hexData) => {
+				if (index % 2 === 0) {
+					const num = (Number.parseInt(hexData[index], 16) << 4) + Number.parseInt(hexData[index + 1], 16)
+					totalBytes[index / 2] = num
+					return totalBytes
+				}
 				return totalBytes
-			} else {
-				return totalBytes
-			}
-		}, new Uint8Array(data.length / 2))
+			},
+			new Uint8Array(data.length / 2),
+		)
 
 		return new WkbGeometryReader(chunk)
 	}
 
 	private readByte(): number {
-		let byte = this.bytes[this.cursor]
+		const byte = this.bytes[this.cursor]
 		this.cursor += 1
 		return byte
 	}
@@ -74,9 +76,9 @@ export class WkbGeometryReader {
 		const result = { type: 'Point', coordinates: [] } as Point
 		this.readByte() // Endianness
 		const type = this.readLong()
-		if ((type & 0x000000ff) != WkbGeometryReader.Point) throw new Error('Illegal State')
+		if ((type & 0x000000ff) !== WkbGeometryReader.Point) throw new Error('Illegal State')
 
-		if ((type & 0xff000000) == WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
+		if ((type & 0xff000000) === WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
 
 		result.coordinates.push(this.readDouble())
 		result.coordinates.push(this.readDouble())
@@ -88,9 +90,9 @@ export class WkbGeometryReader {
 		const result = { type: 'LineString' } as LineString
 		this.readByte() // Endianness
 		const type = this.readLong()
-		if ((type & 0x000000ff) != WkbGeometryReader.LineString) throw new Error('Illegal State')
+		if ((type & 0x000000ff) !== WkbGeometryReader.LineString) throw new Error('Illegal State')
 
-		if ((type & 0xff000000) == WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
+		if ((type & 0xff000000) === WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
 
 		const numPoints = this.readLong()
 		result.coordinates = []
@@ -106,9 +108,9 @@ export class WkbGeometryReader {
 		const result = { type: 'MultiLineString' } as MultiLineString
 		this.readByte() // Endianness
 		const type = this.readLong()
-		if ((type & 0x000000ff) != WkbGeometryReader.MultiLineString) throw new Error('Illegal State')
+		if ((type & 0x000000ff) !== WkbGeometryReader.MultiLineString) throw new Error('Illegal State')
 
-		if ((type & 0xff000000) == WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
+		if ((type & 0xff000000) === WkbGeometryReader.WithSRID) this.readLong() // Result can be ignored
 
 		const numLineStrings = this.readLong()
 		result.coordinates = []
@@ -123,7 +125,7 @@ export class WkbGeometryReader {
 	public readAll(): GeoJsonObject {
 		let result = {} as GeoJsonObject
 		const type = this.readLong()
-		if ((type & 0xff0000000) == WkbGeometryReader.WithSRID) this.readLong()
+		if ((type & 0xff0000000) === WkbGeometryReader.WithSRID) this.readLong()
 
 		this.cursor = 0
 
@@ -138,7 +140,7 @@ export class WkbGeometryReader {
 				result = { ...result, ...this.readWkbMultiLineString() }
 				break
 			default:
-				console.log('Unsupported Geometry Type: ' + (type & 0x000000ff))
+				console.log(`Unsupported Geometry Type: ${type & 0x000000ff}`)
 		}
 
 		return result

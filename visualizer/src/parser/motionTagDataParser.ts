@@ -1,4 +1,4 @@
-import { LineString, MultiLineString, Point } from 'geojson'
+import type { LineString, MultiLineString, Point } from 'geojson'
 import { LatLng } from 'leaflet'
 import { WkbGeometryReader } from './wkbGeometryParser'
 
@@ -9,29 +9,30 @@ export class MotionTagDataParser {
 	private stays: Stay[] = []
 	private movements: Movement[] = []
 	private positionHeatMap: [number, number, number][] = []
+	// biome-ignore lint/suspicious/noExplicitAny:
 	private distanceHeatMapByDay: { [key: string]: { [key: string]: any; total: number; date: Date } } = {}
 
 	public async parse(data: string): Promise<void> {
-		for (let line of data.split('\n').slice(1)) {
-			let values = line.split(';')
-			if (values.length != 24) {
+		for (const line of data.split('\n').slice(1)) {
+			const values = line.split(';')
+			if (values.length !== 24) {
 				console.warn('Unexpected CSV line:', line)
 				continue
 			}
 
 			if (values[15] === 't') continue // Skip "merged" entry
 
-			let entry: Entry = {
+			const entry: Entry = {
 				id: values[0],
 				started_at: new Date(values[3]),
 				finished_at: new Date(values[5]),
 			}
 
-			if (values[2] == 'Stay') {
+			if (values[2] === 'Stay') {
 				const reader = WkbGeometryReader.fromHexString(values[11])
 				const geometry = reader.readAll()
 
-				if (geometry.type != 'Point') {
+				if (geometry.type !== 'Point') {
 					console.warn('Unexpected CSV line:', line)
 					continue
 				}
@@ -50,19 +51,19 @@ export class MotionTagDataParser {
 
 				switch (geometry.type) {
 					case 'MultiLineString':
-						;(geometry as MultiLineString).coordinates.forEach((lineString) => {
-							lineString.forEach((point) => {
+						for (const lineString of (geometry as MultiLineString).coordinates) {
+							for (const point of lineString) {
 								this.positionHeatMap.push([point[1], point[0], MotionTagDataParser.MOVE_HEAT_INTENSITY])
 								path.push(new LatLng(point[1], point[0]))
-							})
-						})
+							}
+						}
 						break
 
 					case 'LineString':
-						;(geometry as LineString).coordinates.forEach((point) => {
+						for (const point of (geometry as LineString).coordinates) {
 							this.positionHeatMap.push([point[1], point[0], MotionTagDataParser.MOVE_HEAT_INTENSITY])
 							path.push(new LatLng(point[1], point[0]))
-						})
+						}
 						break
 
 					default:
@@ -70,9 +71,9 @@ export class MotionTagDataParser {
 						continue
 				}
 
-				this.addToDistanceHeatMap(entry.started_at, parseInt(values[7]), values[9].substring(6))
+				this.addToDistanceHeatMap(entry.started_at, Number.parseInt(values[7]), values[9].substring(6))
 
-				this.movements.push({ ...entry, mode: values[9].substring(6), length: parseInt(values[7]), path: path })
+				this.movements.push({ ...entry, mode: values[9].substring(6), length: Number.parseInt(values[7]), path: path })
 			}
 		}
 
@@ -96,14 +97,14 @@ export class MotionTagDataParser {
 	}
 
 	private addToDistanceHeatMap(dateTime: Date, length: number, mode: string) {
-		const date = dateTime.getDate() + '-' + (dateTime.getMonth() + 1) + '-' + dateTime.getFullYear()
-		if (this.distanceHeatMapByDay[date] == undefined)
+		const date = `${dateTime.getDate()}-${dateTime.getMonth() + 1}-${dateTime.getFullYear()}`
+		if (this.distanceHeatMapByDay[date] === undefined)
 			this.distanceHeatMapByDay[date] = {
 				total: 0,
 				date: new Date(dateTime.getFullYear(), dateTime.getMonth(), dateTime.getDate()),
 			}
 
-		if (this.distanceHeatMapByDay[date][mode] == undefined) this.distanceHeatMapByDay[date][mode] = 0
+		if (this.distanceHeatMapByDay[date][mode] === undefined) this.distanceHeatMapByDay[date][mode] = 0
 
 		this.distanceHeatMapByDay[date][mode] += length
 		this.distanceHeatMapByDay[date].total += length

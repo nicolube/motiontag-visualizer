@@ -1,18 +1,18 @@
-import { Control, DomUtil, Map } from 'leaflet'
+import { Control, type ControlOptions, DomUtil, type Map as LeafletMap } from 'leaflet'
 import { setData } from '..'
 import FileUp from '../img/file-up.svg'
 
 export class VisualizeControl extends Control {
 	private csvInputElement: HTMLInputElement = document.createElement('input')
 
-	constructor(options: {}) {
+	constructor(options: ControlOptions) {
 		super(options)
 
 		this.csvInputElement.type = 'file'
 		this.csvInputElement.accept = 'text/csv'
 	}
 
-	override onAdd(map: Map): HTMLElement {
+	override onAdd(map: LeafletMap): HTMLElement {
 		const vizControlDiv = DomUtil.create('div')
 		vizControlDiv.classList.add('leaflet-bar')
 
@@ -42,13 +42,13 @@ export class VisualizeControl extends Control {
 		const file = this.csvInputElement.files ? this.csvInputElement.files[0] : null
 
 		if (file) {
-			var reader = new FileReader()
+			const reader = new FileReader()
 			reader.readAsText(file, 'UTF-8')
 
 			await new Promise<void>((resolve, reject) => {
 				reader.onload = () => resolve()
 				reader.onerror = (event) => reject((event.currentTarget as FileReader).error)
-			});
+			})
 			setData(reader.result as string)
 		}
 		event.stopPropagation()

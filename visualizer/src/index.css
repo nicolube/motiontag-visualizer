@@ -6,12 +6,18 @@ body {
 
 #map {
 	width: 100dvw;
-	height: calc(100dvh - 210px - 1em);
+	height: calc(100dvh - 210px - 2em); /* screen - heatmap - tooltip - margin */
+}
+
+.statistics {
+	width: calc(100dvw - 2em); /* screen - margin */
+	height: calc(210px + 1em); /* heatmap + tooltip */
+	display: flex;
+	flex-direction: row;
+	margin: 0.5em 1em 0 1em;
 }
 
 #heat {
-	width: 100dvw;
-	height: calc(210px + 1em);
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -25,8 +31,25 @@ body {
 	text-align: left;
 }
 
+#distribution {
+	background-color: gainsboro;
+	height: 210px;
+	width: calc(100dvw - 1396px);
+
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	flex-direction: column;
+
+	color: #fff;
+}
+
+#distribution::before {
+	content: "space for pie chart(s)";
+}
+
 .leaflet-control-load-csv {
-	font: bold 18px 'Lucida Console', Monaco, monospace;
+	font: bold 18px "Lucida Console", Monaco, monospace;
 	box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
 	border-radius: 4px;
 	background-color: #fff;
