@@ -12,6 +12,8 @@ export interface DailyDistanceHeatMapOptions {
 	onSelect?: (entry: Entry | null) => void
 }
 
+type d3_Element<T extends d3.BaseType> = d3.Selection<T, unknown, HTMLElement, unknown>
+
 export class DailyDistanceHeatMap {
 	private static HEIGHT = 200
 	private static DAYS = ['So', 'Sa', 'Fr', 'Do', 'Mi', 'Di', 'Mo']
@@ -45,10 +47,14 @@ export class DailyDistanceHeatMap {
 	private static HOVER_STROKE = '#000000'
 	private static SELECT_STROKE = '#000000'
 
-	private svg: d3.Selection<SVGSVGElement, unknown, HTMLElement, unknown>
-	private svg_g: d3.Selection<SVGGElement, unknown, HTMLElement, unknown> | null = null
-	private tooltip: d3.Selection<HTMLDivElement, unknown, HTMLElement, unknown>
-	private select_rect: d3.Selection<SVGRectElement, unknown, HTMLElement, unknown> | null = null
+	private svg: d3_Element<SVGSVGElement>
+	private svg_g: d3_Element<SVGGElement> | null = null
+	private footer: d3_Element<HTMLDivElement>
+	private tooltip: d3_Element<HTMLDivElement>
+	private prevYear: d3_Element<HTMLAnchorElement>
+	private currYear: d3_Element<HTMLSpanElement>
+	private nextYear: d3_Element<HTMLAnchorElement>
+	private selectRect: d3_Element<SVGRectElement> | null = null
 
 	private xScale: d3.ScaleBand<string> | null = null
 	private yScale: d3.ScaleBand<string> | null = null
@@ -56,14 +62,30 @@ export class DailyDistanceHeatMap {
 	private selectedEntry: Entry | null = null
 	private options: DailyDistanceHeatMapOptions = {}
 
+	private yearlyData: { [key: number]: Entry[] } = {}
+	private selectedYear: number | undefined;
+
 	constructor(element: string, options?: DailyDistanceHeatMapOptions) {
 		this.svg = d3.select(element).append('svg')
-		this.tooltip = d3.select('#heat').append('div').attr('class', 'tooltip').text('')
+
+		this.footer = d3.select('#heat').append('div').attr('class', 'footer')
+
+		this.tooltip = this.footer.append('div').attr('class', 'tooltip').text('')
+
+		const yearSelect = this.footer.append('div').attr('class', 'select');
+
+		this.prevYear = yearSelect.append('a').text('< Previous').attr('href', 'javascript:void(0)').attr('class', "disabled")
+		this.currYear = yearSelect.append('span').text("").attr('class', 'current');
+		this.nextYear = yearSelect.append('a').text('Next >').attr('href', 'javascript:void(0)').attr('class', "disabled")
+
 		this.options = options ?? {}
 	}
 
-	public drawGrid(year: number) {
-		const weeks = Array.from({ length: this.getISOWeeksInYear(year) }, (_, index) => `${index + 1}`)
+	private drawGrid() {
+		if (this.svg_g != null)
+			this.svg_g.remove()
+
+		const weeks = Array.from({ length: 52 }, (_, index) => `${index + 1}`)
 
 		this.yScale = d3
 			.scaleBand()
@@ -83,24 +105,33 @@ export class DailyDistanceHeatMap {
 			.append('g')
 			.attr('transform', 'translate(23, 16)')
 
-		this.tooltip.style('width', `${width - 23}px`)
-		this.tooltip.style('margin-left', '23px')
+		this.footer.style('width', `${width - 23}px`)
 
-		this.select_rect = this.svg_g
+		this.selectRect = this.svg_g
 			.append('rect')
 			.style('opacity', 0)
 			.attr('width', this.xScale.bandwidth())
 			.attr('height', this.yScale.bandwidth())
 			.attr('stroke', DailyDistanceHeatMap.SELECT_STROKE)
 
-		this.drawAxis()
+
+		this.registerYearSelector(this.nextYear, +1)
+		this.registerYearSelector(this.prevYear, -1)
 	}
 
 	private drawAxis() {
 		if (this.yScale == null || this.xScale == null || this.svg_g == null) return
 
-		const yAxis = this.svg_g.append('g').call(d3.axisLeft(this.yScale))
-		yAxis.select('.domain').remove()
+		this.footer.style('visibility', 'visible')
+		this.svg_g.select('g[role=Xaxis]').remove()
+		this.svg_g.select('g[role=Yaxis]').remove()
+
+		const year = this.selectedYear ?? (new Date()).getFullYear();
+
+		const yAxis = this.svg_g.append('g')
+			.attr('role', 'Yaxis')
+			.call(d3.axisLeft(this.yScale))
+
 		yAxis
 			.selectAll('.tick line')
 			.attr('x2', this.xScale.bandwidth() * this.xScale.domain().length)
@@ -111,13 +142,13 @@ export class DailyDistanceHeatMap {
 		const xAxis = this.svg_g.append('g').call(
 			d3.axisTop(this.xScale).tickFormat((domainValue) => {
 				const weekNr = Number.parseInt(domainValue)
-				if (this.getMonthFromWeek(weekNr - 1, 2024) !== this.getMonthFromWeek(weekNr, 2024)) {
-					return this.getMonthFromWeek(weekNr, 2024)
+				if (this.getMonthFromWeek(weekNr - 1, year) !== this.getMonthFromWeek(weekNr, year)) {
+					return this.getMonthFromWeek(weekNr, year)
 				}
 				return domainValue
 			}),
-		)
-		xAxis.select('.domain').remove()
+		).attr('role', 'Xaxis')
+
 		xAxis
 			.selectAll('.tick line')
 			.attr('y2', this.yScale.bandwidth() * this.yScale.domain().length)
@@ -140,21 +171,21 @@ export class DailyDistanceHeatMap {
 	}
 
 	private drawSelected() {
-		if (this.select_rect == null) return
+		if (this.selectRect == null) return
 
-		this.select_rect.transition()
+		this.selectRect.transition()
 		if (this.selectedEntry == null) {
-			this.select_rect.style('opacity', 0)
+			this.selectRect.style('opacity', 0)
 			this.tooltip.html('')
 			return
 		}
 
-		this.select_rect
+		this.selectRect
 			.style('opacity', 1)
 			.attr('x', (entry) => this.xScale!(`${this.getISOWeekNumber(this.selectedEntry!.date!)}`)!)
 			.attr(
 				'y',
-				(entry) => this.yScale!(['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][this.selectedEntry!.date!.getDay()])!,
+				(entry) => this.yScale!(DailyDistanceHeatMap.DAYS[this.selectedEntry!.date!.getDay()])!,
 			)
 
 		this.tooltip.html(DailyDistanceHeatMap.getDescription(this.selectedEntry))
@@ -162,9 +193,8 @@ export class DailyDistanceHeatMap {
 
 	private static getDescription(entry: Entry) {
 		const distance = entry.total > 5000 ? `${Math.round(entry.total / 100) / 10}km` : `${entry.total}m`
-		const date = `${entry.date.getDate()}. ${
-			DailyDistanceHeatMap.MONTHS[entry.date.getMonth()]
-		} ${entry.date.getFullYear()}`
+		const date = `${entry.date.getDate()}. ${DailyDistanceHeatMap.MONTHS[entry.date.getMonth()]
+			} ${entry.date.getFullYear()}`
 
 		const modes = Object.keys(entry)
 			.filter((key) => !(key === 'date' || key === 'total'))
@@ -172,16 +202,15 @@ export class DailyDistanceHeatMap {
 				return entry[a] < entry[b] ? 1 : -1
 			})
 			.map((key) => {
-				return `<span style="background-color: ${getColorForMode(key)}">${
-					entry[key] > 5000 ? `${Math.round(entry[key] / 100) / 10}km` : `${entry[key]}m`
-				} ${key}</span>`
+				return `<span style="background-color: ${getColorForMode(key)}">${entry[key] > 5000 ? `${Math.round(entry[key] / 100) / 10}km` : `${entry[key]}m`
+					} ${key}</span>`
 			})
 			.join('\t')
 		return `<b>${date}:</b> ${distance}, <b>Modes:</b> ${modes}`
 	}
 
-	public drawData(data: Entry[], upperBound?: number) {
-		if (this.xScale == null || this.yScale == null || this.svg_g == null) return
+	private drawData() {
+		if (this.xScale == null || this.yScale == null || this.svg_g == null || !this.selectedYear) return
 
 		this.svg_g.select('g[role=data]').remove()
 		const tooltip = this.tooltip
@@ -197,20 +226,19 @@ export class DailyDistanceHeatMap {
 			.scaleQuantize()
 			// @ts-expect-error
 			.range(DailyDistanceHeatMap.COLOR_RAMP)
-			.domain([0, upperBound ?? 300 * 1000])
+			.domain([0, 300 * 1000])
 
 		this.svg_g
 			.append('g')
 			.attr('role', 'data')
 			.selectAll()
-			.data(data)
+			.data(this.yearlyData[this.selectedYear])
 			.join('rect')
 			.attr('x', (entry) => this.xScale!(`${this.getISOWeekNumber(entry.date)}`)!)
-			.attr('y', (entry) => this.yScale!(['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][entry.date.getDay()])!)
+			.attr('y', (entry) => this.yScale!(DailyDistanceHeatMap.DAYS[entry.date.getDay()])!)
 			.attr('width', () => this.xScale!.bandwidth() - 5)
 			.attr('height', () => this.yScale!.bandwidth() - 5)
 			.attr('transform', 'translate(2.5, 2.5)')
-			// .attr('border-radius', "")
 			.attr('fill', (entry) => colorRamp(entry.total))
 			.on('mouseover', function (event, entry) {
 				d3.select(this).attr('stroke', DailyDistanceHeatMap.HOVER_STROKE)
@@ -223,22 +251,72 @@ export class DailyDistanceHeatMap {
 			.on('click', (event, entry) => {
 				if (getSelectedDate() != null && getSelectedDate()!.toDateString() === entry.date.toDateString()) {
 					setSelectedDate(null)
-					if (this.options.onSelect) this.options.onSelect(null)
+					if (onSelect) onSelect(null)
 					return
 				}
 				setSelectedDate(entry)
-				if (this.options.onSelect) this.options.onSelect(entry)
+				if (onSelect) onSelect(entry)
 			})
 	}
 
-	// -- Date functions
+	public setData(data: Entry[]) {
+		for (const entry of data) {
+			const year = entry.date.getFullYear()
+			const month = entry.date.getMonth();
+			const weekNr = this.getISOWeekNumber(entry.date)
 
-	private getISOWeeksInYear(year: number): number {
-		const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+			let isoWeekNrYear = year;
 
-		const lastDayOfYear = new Date(year, 11, 31)
+			if (month === 0 && weekNr >= 50)
+				isoWeekNrYear = year - 1
 
-		return lastDayOfYear.getDay() === 4 || (isLeapYear && lastDayOfYear.getDay() === 5) ? 53 : 52
+			if (month === 11 && weekNr === 1)
+				isoWeekNrYear = year + 1
+
+			if (!(isoWeekNrYear in this.yearlyData))
+				this.yearlyData[isoWeekNrYear] = [];
+
+			this.yearlyData[isoWeekNrYear].push(entry);
+		}
+
+		this.selectedYear = Number.parseInt(Object.keys(this.yearlyData)[0]);
+		this.redrawYear();
+	}
+
+	public redrawYear() {
+		if (!this.selectedYear)
+			return;
+
+		this.currYear.html(this.selectedYear.toString())
+
+		this.drawAxis()
+		this.drawData()
+
+		if (String(this.selectedYear - 1) in this.yearlyData) {
+			this.prevYear.attr('class', '')
+		} else {
+			this.prevYear.attr('class', 'disabled')
+		}
+
+		if (String(this.selectedYear + 1) in this.yearlyData) {
+			this.nextYear.attr('class', '')
+		} else {
+			this.nextYear.attr('class', 'disabled')
+		}
+	}
+
+	public drawInitial() {
+		this.drawGrid()
+		this.drawAxis()
+	}
+
+	private registerYearSelector(element: d3.Selection<HTMLAnchorElement, unknown, HTMLElement, unknown>, step: number) {
+		element.on('click', () => {
+			if (!this.selectedYear) return;
+
+			this.selectedYear = this.selectedYear + step;
+			this.redrawYear();
+		})
 	}
 
 	private getISOWeekNumber(date: Date): number {

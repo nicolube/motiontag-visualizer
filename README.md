@@ -46,7 +46,7 @@ cargo run -- [...] --url "https://api.motion-tag.de/api"
 ```
 
 ## TODO / Future Ideas / Roadmap / ...
-- support more than one year in DailyDistanceHeatMap
+- ~~support more than one year in DailyDistanceHeatMap~~
 - add more statistics
 - use [pfaedle](https://github.com/ad-freiburg/pfaedle) to align public transport rides with correct paths
 - compare paths and find commute routes

@@ -11,7 +11,7 @@ const dailyDistance = new DailyDistanceHeatMap('#heat', {
 	onSelect: showTracksForSelectedDate,
 })
 
-dailyDistance.drawGrid(2024)
+dailyDistance.drawInitial();
 
 const map = new LeafletMap('map', {
 	zoom: 7,
@@ -121,7 +121,7 @@ export async function setData(d: string) {
 
 	console.log('Parsing data took', `${Date.now() - start}ms`)
 
-	dailyDistance.drawData(Object.values(parser.getDistanceHeatMap()))
+	dailyDistance.setData(Object.values(parser.getDistanceHeatMap()))
 
 	// "HeatMap"
 	for (const movement of parser.getMovements()) {

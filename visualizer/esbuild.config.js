@@ -41,7 +41,7 @@ if (process.argv[2] === '--serve') {
 		fallback: './index.html',
 	})
 
-	console.log(`Serving app at ${host}:${port}.`)
+	console.log(`Serving app at http://${host}:${port}.`)
 } else if (process.argv[2] === '--build') {
 	await esbuild.build(createBuildSettings({ minify: true, publicPath: './' }))
 } else {
